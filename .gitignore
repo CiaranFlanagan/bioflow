@@ -1,0 +1,11 @@
+bin/
+coverage.out
+.bioflow/
+out/
+samples/
+ref/
+*.sam
+*.bam
+*.vcf
+*.fastq
+*.fastq.gz
