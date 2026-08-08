@@ -1,0 +1,28 @@
+# A standard short-read variant calling pipeline.
+#
+# qc and trim are independent, so bioflow runs them in the same wave. align
+# waits for trim, and call waits for align.
+
+name: variant-calling
+inputs: samples/*.fastq.gz
+
+steps:
+  - id: qc
+    image: biocontainers/fastqc:v0.11.9_cv8
+    run: fastqc samples/*.fastq.gz -o out/qc
+
+  - id: trim
+    image: biocontainers/fastp:v0.20.1_cv1
+    run: fastp -i samples/sample.fastq.gz -o out/trimmed.fastq.gz
+    retries: 2
+
+  - id: align
+    image: biocontainers/bwa:v0.7.17_cv1
+    needs: [trim]
+    run: bwa mem ref/genome.fa out/trimmed.fastq.gz > out/aligned.sam
+    retries: 2
+
+  - id: call
+    image: biocontainers/bcftools:v1.9-1-deb_cv1
+    needs: [align]
+    run: bcftools mpileup -f ref/genome.fa out/aligned.sam | bcftools call -mv -o out/variants.vcf
